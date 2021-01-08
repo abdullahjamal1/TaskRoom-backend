@@ -1,0 +1,15 @@
+/target/
+.classpath
+.project
+.settings/
+*.log
+*.1
+config/
+storage/
+*.db
+.checkstyle
+*.properties
+*.gz
+*.jar
+
+
