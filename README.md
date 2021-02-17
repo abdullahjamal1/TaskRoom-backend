@@ -1,4 +1,4 @@
-# gameHub
+# gameHub-backend   ( for gamehub backend => [https://github.com/aj941ga/gamehub-frontend](https://github.com/aj941ga/gamehub-frontend) )
 A one stop game site where users can download, rate and upload games. 
 Registered Users can make profile. Comment on game feed. upvote/downvote other comments.
 supports mail based authentication for registeration.
