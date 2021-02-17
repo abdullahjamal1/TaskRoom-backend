@@ -7,6 +7,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import app.models.entity.User;
+import app.models.projections.UserListResponse;
+import app.models.projections.UserResponse;
 
 /**
  * 
@@ -27,34 +29,26 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
     User findOneByToken(String token);
     
-    User findOneById(Long id);
+    @Query(value = "select u.id, u.creation_time, u.user_name, u.first_name, u.last_name, u.role from user u where u.id = :id ;", nativeQuery = true)
+    UserResponse findOneById(@Param("id") Long id);
+
+    public static String findAllQuery = "select u.id, u.creation_time, u.user_name, u.first_name, u.last_name, statistic.uploads" +
+    " FROM user u, " +
+    " (select count(*) as uploads, g.user_id as id from game g group by g.user_id) as statistic" +
+    " where statistic.id = u.id ;";
+
+
+    @Query(value = findAllQuery, nativeQuery = true)
+	Iterable<UserListResponse> findAllUsers();
 
     /*
      * Queries that require a `@Modifying` annotation include INSERT, UPDATE, DELETE, and DDLstatements.
      *  @Transactional Describes a transaction attribute on an individual method or on a class
      */
-    
-    @Modifying
-    @Transactional
-    @Query("update User u set u.email = :email, u.firstName = :firstName, "
-            + "u.lastName = :lastName, u.address = :address, u.companyName = :companyName "
-            + "where u.userName = :userName")
-    int updateUser(
-            @Param("userName") String userName,
-            @Param("email") String email,
-            @Param("firstName") String firstName,
-            @Param("lastName") String lastName,
-            @Param("address") String address,
-            @Param("companyName") String companyName
-            );
 
     @Modifying
     @Transactional
     @Query("update User u set u.lastLogin = CURRENT_TIMESTAMP where u.userName = ?1")
     int updateLastLogin(String userName);
 
-    @Modifying
-    @Transactional
-    @Query("update User u set u.profilePicture = ?2 where u.userName = ?1")
-    int updateProfilePicture(String userName, String profilePicture);
 }

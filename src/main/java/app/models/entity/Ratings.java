@@ -3,12 +3,12 @@ package app.models.entity;
 import java.io.Serializable;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-
-import org.hibernate.mapping.Selectable;
+import javax.persistence.IdClass;
 
 @Entity
+// @Table(name = "ratings")
+@IdClass(RatingsId.class)
 public class Ratings implements Serializable{
 
 	/**
@@ -16,7 +16,6 @@ public class Ratings implements Serializable{
 	 */
 	private static final long serialVersionUID = -1746979225792481600L;
 	
-	@GeneratedValue
 	@Id
 	private Long user_id;
 	private float rating;

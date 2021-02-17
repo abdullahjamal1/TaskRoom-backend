@@ -5,11 +5,8 @@
 *.log
 *.1
 config/
-storage/
+users/
 *.db
 .checkstyle
 *.properties
-*.gz
-*.jar
-
-
+fileSystem/

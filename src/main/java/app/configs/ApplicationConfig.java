@@ -4,7 +4,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Configuration;
 
+import lombok.Data;
+
 @Configuration
+@Data
 @ConfigurationProperties(prefix = "app")
 @ConfigurationPropertiesScan("application.properties")
 public class ApplicationConfig {
@@ -25,84 +28,84 @@ public class ApplicationConfig {
 
     private boolean userVerification;
 
-    public String getSecret() {
+    // public String getSecret() {
 
-        return secret;
-    }
+    // return secret;
+    // }
 
-    public void setSecret(final String secret) {
+    // public void setSecret(final String secret) {
 
-        this.secret = secret;
-    }
+    // this.secret = secret;
+    // }
 
-    public String getUrl() {
+    // public String getUrl() {
 
-        return url;
-    }
+    // return url;
+    // }
 
-    public void setUrl(final String url) {
+    // public void setUrl(final String url) {
 
-        this.url = url;
-    }
+    // this.url = url;
+    // }
 
-    public String getEmailFrom() {
+    // public String getEmailFrom() {
 
-        return emailFrom;
-    }
+    // return emailFrom;
+    // }
 
-    public void setEmailFrom(final String emailFrom) {
+    // public void setEmailFrom(final String emailFrom) {
 
-        this.emailFrom = emailFrom;
-    }
+    // this.emailFrom = emailFrom;
+    // }
 
-    public String getEmailSupport() {
+    // public String getEmailSupport() {
 
-        return emailSupport;
-    }
+    // return emailSupport;
+    // }
 
-    public void setEmailSupport(final String emailSupport) {
+    // public void setEmailSupport(final String emailSupport) {
 
-        this.emailSupport = emailSupport;
-    }
+    // this.emailSupport = emailSupport;
+    // }
 
-    public boolean isEmailErrors() {
+    // public boolean isEmailErrors() {
 
-        return emailErrors;
-    }
+    // return emailErrors;
+    // }
 
-    public void setEmailErrors(final boolean emailErrors) {
+    // public void setEmailErrors(final boolean emailErrors) {
 
-        this.emailErrors = emailErrors;
-    }
+    // this.emailErrors = emailErrors;
+    // }
 
-    public boolean isEmailMock() {
+    // public boolean isEmailMock() {
 
-        return emailMock;
-    }
+    // return emailMock;
+    // }
 
-    public void setEmailMock(final boolean emailMock) {
+    // public void setEmailMock(final boolean emailMock) {
 
-        this.emailMock = emailMock;
-    }
+    // this.emailMock = emailMock;
+    // }
 
-    public String getUserRoot() {
+    // public String getUserRoot() {
 
-        return userRoot;
-    }
+    // return userRoot;
+    // }
 
-    public void setUserRoot(final String userRoot) {
+    // public void setUserRoot(final String userRoot) {
 
-        this.userRoot = userRoot;
-    }
+    // this.userRoot = userRoot;
+    // }
 
-    public boolean isUserVerification() {
+    // public boolean isUserVerification() {
 
-        return userVerification;
-    }
+    // return userVerification;
+    // }
 
-    public void setUserVerification(final boolean userVerification) {
+    // public void setUserVerification(final boolean userVerification) {
 
-        this.userVerification = userVerification;
-    }
+    // this.userVerification = userVerification;
+    // }
 
 }

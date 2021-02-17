@@ -17,13 +17,16 @@
 package app;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.CacheControl;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import springfox.documentation.builders.ApiInfoBuilder;
@@ -43,6 +46,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 public class Application {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
+
 
     public static void main(final String[] args) throws Exception {
 

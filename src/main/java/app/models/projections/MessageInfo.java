@@ -21,6 +21,9 @@ public interface MessageInfo {
 	
 	public Long getUser_id();
 	public void setUser_id(Long user_id);
+
+	public Long getParent_id();
+	public void setParent_id(Long parent_id);
 	
 	public String getDescription();
 	public void setDescription(String description);
@@ -32,12 +35,12 @@ public interface MessageInfo {
      *  From User Entity
      */
     
-    public String getUserName();
-    public void setUserName(String name);
+    public String getUser_name();
+    public void setUser_name(String name);
     
     /*
      *  custom
      */
-    public boolean getHasVoted();
-    public void setHasVoted(boolean hasVoted);
+    // public boolean getHasVoted();
+    // public void setHasVoted(boolean hasVoted);
 }

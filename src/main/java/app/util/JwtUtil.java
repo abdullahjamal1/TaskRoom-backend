@@ -3,8 +3,14 @@ package app.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+
+import org.apache.catalina.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+
+import app.repositories.UserRepository;
+import app.services.UserService;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -14,11 +20,20 @@ import java.util.function.Function;
 @Service
 public class JwtUtil {
     
+    @Autowired
+    UserService userService;
+
+    @Autowired
+    UserRepository userRepository;
     
     private String SECRET_KEY = "secret";
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public Long extractUserId(String token) {
+        return userRepository.findOneByUserName(extractUsername(token)).getId();
     }
 
     public Date extractExpiration(String token) {
@@ -44,9 +59,9 @@ public class JwtUtil {
     
     private String createToken(Map<String, Object> claims, String subject) {
 
-        /* exp date is set to 10 hrs */
+        /* exp date is set to 100 hrs */
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 100))
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
     }
 

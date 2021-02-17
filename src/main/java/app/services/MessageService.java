@@ -2,6 +2,8 @@ package app.services;
 
 import java.util.List;
 
+import com.sun.mail.iap.Response;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,82 +16,62 @@ import app.models.projections.MessageInfo;
 
 @Service
 public class MessageService {
-	
+
 	@Autowired
-	private MessageRepository messageRepo;	
-    
-    @Autowired
-    private Msg_voteRepository voteRepo;
-     
-    @Autowired
-    private UserService userService;
+	private MessageRepository messageRepo;
 
-	public String deleteMessageById(Long msg_id) {
-		
-		if(isMessageAuthorOrAdmin(msg_id)) {
-			
+	@Autowired
+	private Msg_voteRepository voteRepo;
+
+	public int deleteMessageById(Long msg_id, Long user_id) {
+
+		if (isMessageAuthorOrAdmin(msg_id, user_id)) {
+
 			messageRepo.deleteById(msg_id);
+		}else{
 			
-			return "message deleted !";
+			//
+			return Response.BAD;
 		}
-		else {
-			
-			return "user not authorized";
-		}
+
+		return Response.OK;
 	}
 
-	public List<MessageInfo> findAllMessages(Long game_id) {
-		
-		return messageRepo.findAllMessagesByGameId(game_id, userService.getLoggedInUser().getId());
-	}
+	public void voteMessage(Long msg_id, boolean vote, Long user_id) {
 
-	public String voteMessage(Long msg_id, boolean vote) {
-		
 		Msg_vote msgVote = new Msg_vote();
 		msgVote.setDid_upvote(vote);
 		msgVote.setMsg_id(msg_id);
-		msgVote.setUser_id( userService.getLoggedInUser().getId() );
-		
-		if(!voteRepo.hasAlreadyVoted( userService.getLoggedInUser().getId() )) {
-			
-			voteRepo.save(msgVote);
-		}
-		else {
-			
-			voteRepo.save(msgVote);
-		}
+		msgVote.setUser_id(user_id);
 
-		return "your vote has been recorded";
-		
+		voteRepo.save(msgVote);
 	}
-	
-    public boolean isMessageAuthorOrAdmin(Long msg_id) {
-    	
-        Long gameAuthorUserId = messageRepo.findAuthorByMessageId(msg_id);
-        final User loggedInUser = userService.getLoggedInUser();       
-        /*
-         *  if @AuthorOfGame OR @Admin allow to delete the game else deny
-         */
-        if (loggedInUser.getId().equals(gameAuthorUserId) || loggedInUser.isAdmin()) {
-        	
-        	return true;
-            
-        } else{
-        	
-            return false;
-        }
-    }
 
-	public String save(Message msg) {
-		
+	public boolean isMessageAuthorOrAdmin(Long msg_id, Long user_id) {
+
+		/*
+		 * if @AuthorOfGame OR @Admin allow to delete the game else deny
+		 */
+		if (messageRepo.findAuthorByMessageId(msg_id)== user_id /*|| loggedInUser.isAdmin()*/)
+			return true;
+		else
+			return false;
+	}
+
+	public Message save(Message msg, Long game_id, Long parent_id, Long user_id) {
+
 		msg.setMsg_id(null);
 
-		msg.setUser_id(userService.getLoggedInUser().getId());
-		
-		messageRepo.save(msg);
-		
-		return "message saved !";
+		msg.setUser_id(user_id);
+		msg.setGame_id(game_id);
+		msg.setParent_id(parent_id);
+
+		return messageRepo.save(msg);
 	}
 
+	public List<MessageInfo> findAllMessages(Long game_id, Long parent_id) {
+
+		return messageRepo.findAllMessagesByGameId(game_id, parent_id);
+	}
 
 }

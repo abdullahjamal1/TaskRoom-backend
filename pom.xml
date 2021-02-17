@@ -138,6 +138,12 @@
         	<artifactId>springfox-swagger-ui</artifactId>
         	<version>3.0.0</version>
         </dependency>
+          <!-- Aws dependency. -->
+        <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk</artifactId>
+      <version>1.11.825</version>
+    </dependency>
 
     </dependencies>
 

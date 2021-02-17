@@ -40,13 +40,7 @@ public class User extends AbstractEntity{
 
     private String lastName;
 
-    private String address;
-
-    private String companyName;
-
     private String lastLogin;
-
-    private String profilePicture;
     
     public User(String userName, String password){
         this.userName = userName;
@@ -65,6 +59,48 @@ public class User extends AbstractEntity{
     public void setUserName(final String name) {
 
         this.userName = name;
+    }
+
+
+    public String getRole() {
+
+        return role;
+    }
+
+    public void setRole(final String role) {
+
+        this.role = role;
+    }
+
+    public String getFirstName() {
+
+        return firstName;
+    }
+
+    public void setFirstName(final String firstName) {
+
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+
+        return lastName;
+    }
+
+    public void setLastName(final String lastName) {
+
+        this.lastName = lastName;
+    }
+
+
+    public String getLastLogin() {
+
+        return lastLogin;
+    }
+
+    public void setLastLogin(final String lastLogin) {
+
+        this.lastLogin = lastLogin;
     }
 
     public String getPassword() {
@@ -107,84 +143,9 @@ public class User extends AbstractEntity{
         this.email = email;
     }
 
-    public String getRole() {
+    // public boolean isMatchingPasswords() {
 
-        return role;
-    }
-
-    public void setRole(final String role) {
-
-        this.role = role;
-    }
-
-    public String getFirstName() {
-
-        return firstName;
-    }
-
-    public void setFirstName(final String firstName) {
-
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-
-        return lastName;
-    }
-
-    public void setLastName(final String lastName) {
-
-        this.lastName = lastName;
-    }
-
-    public String getAddress() {
-
-        return address;
-    }
-
-    public void setAddress(final String address) {
-
-        this.address = address;
-    }
-
-    public String getCompanyName() {
-
-        return companyName;
-    }
-
-    public void setCompanyName(final String companyName) {
-
-        this.companyName = companyName;
-    }
-
-    public String getLastLogin() {
-
-        return lastLogin;
-    }
-
-    public void setLastLogin(final String lastLogin) {
-
-        this.lastLogin = lastLogin;
-    }
-
-    public String getProfilePicture() {
-
-        return profilePicture;
-    }
-
-    public void setProfilePicture(final String profilePicture) {
-
-        this.profilePicture = profilePicture;
-    }
-    
-    public boolean isAdmin() {
-
-        return "ROLE_ADMIN".equals(this.role);
-    }
-
-    public boolean isMatchingPasswords() {
-
-        return this.password.equals(this.confirmPassword);
-    }
+    //     return this.password.equals(this.confirmPassword);
+    // }
   
 }

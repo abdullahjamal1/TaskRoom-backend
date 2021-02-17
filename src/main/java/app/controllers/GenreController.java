@@ -1,8 +1,6 @@
 package app.controllers;
 
-import java.util.List;
-
-import javax.servlet.http.HttpSession;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,89 +10,60 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import app.models.entity.Genre;
 import app.repositories.GenreRepository;
-import app.services.GameService;
-import app.models.projections.GameInfoAbstract;
 
 /**
  * 
  * @author abdullah jamal
  *
- *	GET : /game/genre/{genre_id}
+ *         GET : /game/genre/{genre_id}
  *
- *	GET : /game/genre/list
+ *         GET : /game/genre/list
  *
- *	@Admin
- *	PUT : /game/genre/{genre_id}
+ * @Admin PUT : /game/genre/{genre_id}
  *
- *	@Admin
- *	POST : /game/genre
+ * @Admin POST : /game/genre/list
  *
- *	@Admin
- *	DELETE : game/genre/{genre_id}
+ * @Admin DELETE : game/genre/{genre_id}
  */
 
 @RestController
+@RequestMapping("/genres")
 public class GenreController {
-	
-    @Autowired
-    private GenreRepository genreRepo;
-    
-    @Autowired
-    private GameService gameService;
-    
-    
-	@GetMapping("/game/genre/{genre_id}")
-    public Genre displayGenreById(@PathVariable("genre_id") Long id) {
 
-		return genreRepo.findOneGenreById(id);
+	@Autowired
+	private GenreRepository genreRepo;
+
+	@GetMapping("/{genre_id}")
+	public Optional<Genre> displayGenreById(@PathVariable("genre_id") Long id) {
+
+		return genreRepo.findById(id);
     }
     
-	@GetMapping("/game/genre/list")
+	@GetMapping("")
     public Iterable<Genre> displayGenreList() {
 
 		return genreRepo.findAll();
     }
 	
-	@PutMapping("/game/genre")
-    public void editGenreById(@RequestBody Genre g) {
+	@PutMapping("/{genre_id}")
+    public Genre editGenreById(@RequestBody Genre g, @PathVariable("genre_id") Long id) {
 		
-		if(gameService.isAdmin()) {
-			
-			genreRepo.updateGenre(g.getGenre_id(), g.getType());
-		}
+		return genreRepo.save(g);
     }	
 	
-	@PostMapping("/game/genre")
-    public String createNewGenreType(@RequestBody Genre g) {
-		
-		if(gameService.isAdmin()) {
-			
-			genreRepo.save(g);
-			
-			return "new genre created successfully";
-		}
-		else{
-			
-			return "You are not authorized !";
-		}
+	@PostMapping("")
+    public Genre createNewGenreType(@RequestBody Genre g) {
+
+		return genreRepo.save(g);
     }
 	
-	@DeleteMapping("/game/genre/{genre_id}")
-    public String deleteGenreById(@PathVariable Long id) {
+	@DeleteMapping("/{genre_id}")
+    public void deleteGenreById(@PathVariable Long id) {
 
-		if(gameService.isAdmin()) {
-		
-			genreRepo.deleteById(id);
-			
-			return "new genre deleted successfully";			
-		}
-		else {
-			return "You are not authorized !";			
-		}
+		genreRepo.deleteById(id);		
     }	
 }

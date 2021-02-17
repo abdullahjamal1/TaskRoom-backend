@@ -5,35 +5,49 @@ import java.time.Instant;
 public interface GameInfo extends GameInfoAbstract{
 	
 	/*
-	 * 
-	 *  from game entity
-	 */
+	* 
+	*  from game entity
+	*/
+	
+	public Long getGame_id();
+	public void setGame_id(Long game_id);
 
 	public Long getUser_id();
 	public void setUser_id(Long user_id);
 
+
+
 	public Long getGenre_id();
 	public void setGenre_id(Long genre_id);
 
-	public String getGame_path();
-	public void setGame_path(String game_path);
-
-	public Instant getCreationTime();
-    public void setCreationTime(final Instant creationTime);
+	public Instant getCreation_time();
+    public void setCreation_time(final Instant creationTime);
 
 	public String getDescription();
 	public void setDescription(String description);
 
-	public String getGame_picture();
-	public void setGame_picture(String game_picture);
+	public String getTitle();
+	public void setTitle(String name);
+
+	public String getType();
+	public void setType(String type);
+	
+	public float getRating();
+	public void setRating(float rating);
+	
 	
 	/*
-	 *  from genre User
-	 */
-    public String getUserName();
-    public void setUserName(final String name);
-    
-    public String getRole();
-    public void setRole(final String role);
-	
+	*  from genre User
+	*/
+    public String getUser_name();
+    public void setUser_name(final String name);
+
+	// custom
+
+	public Long getRatedBy();
+	public void setRatedBy(Long ratedBy);
+
+	public Long getDownloads();
+	public void setDownloads(Long downloads);	
+
 }

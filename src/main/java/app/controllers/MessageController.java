@@ -9,13 +9,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import app.models.entity.Message;
-import app.repositories.MessageRepository;
-import app.services.MessageService;
-import app.services.UserService;
 import app.models.projections.MessageInfo;
+import app.services.MessageService;
+import app.util.JwtUtil;
 
 /**
  * 
@@ -24,30 +26,22 @@ import app.models.projections.MessageInfo;
  */
 
 @RestController
+@RequestMapping("/comments")
 public class MessageController{
 	
 	@Autowired
 	private MessageService messageService;	
+
+	@Autowired
+	private JwtUtil jwtUtil;
 	
-	@GetMapping("/game/{game_id}/messages")
-	public List<MessageInfo> findAllMessages(@PathVariable("game_id") Long game_id) {
+	@GetMapping("/game/{game_id}")
+	public List<MessageInfo> findAllMessages(@PathVariable("game_id") Long game_id,	
+				@RequestParam(value="parent_id") Long parent_id) {
 		
-		return messageService.findAllMessages(game_id);
+			return messageService.findAllMessages(game_id, parent_id);			
 	}
 	
-	/**
-	 * @Admin
-	 * @AuthorOfMessage
-	 * 
-	 * @param msg_id
-	 * @return
-	 */
-	
-	@DeleteMapping("/game/messages/{msg_id}")
-	public String deleteMessageById(@PathVariable("msg_id") Long msg_id) {
-		
-		return messageService.deleteMessageById(msg_id);
-	}
 	
 	/**
 	 * vote = 1 for upvote
@@ -58,19 +52,40 @@ public class MessageController{
 	 * @return
 	 */
 	
-	@PutMapping("/game/messages/{msg_id}/vote/")
-	public String voteMessageById(@PathVariable("msg_id") Long msg_id,
-								  @RequestBody boolean vote) {
-		
-		return messageService.voteMessage(msg_id, vote);
+	@PutMapping("/{msg_id}/vote")
+	public void voteMessageById(@PathVariable("msg_id") Long msg_id,
+	@RequestParam boolean vote,
+	@RequestHeader(name="Authorization") String token
+	) {
+
+		messageService.voteMessage(msg_id, vote, jwtUtil.extractUserId(token));
 	}
 	
 	
-	@PostMapping("/game/messages")
-	public String postMessage(@RequestBody Message msg) {
+	@PostMapping("/game/{game_id}")
+	public Message postMessage(@PathVariable("game_id") Long game_id,
+	@RequestBody Message message,
+	@RequestParam(value="parent_id") Long parent_id,
+	@RequestHeader(name="Authorization") String token
+	) { 
 		
-		return messageService.save(msg);
+		return messageService.save(message, game_id, parent_id, jwtUtil.extractUserId(token));
 	}
+	//==================================================================
 	
+	/**
+	 * @Admin
+	 * @AuthorOfMessage
+	 * 
+	 * @param msg_id
+	 * @return
+	 */
+	
+	@DeleteMapping("/{msg_id}")
+	public int deleteMessageById(@PathVariable("msg_id") Long msg_id
+									,@RequestHeader(name="Authorization") String token) {
+		
+		return messageService.deleteMessageById(msg_id, jwtUtil.extractUserId(token));
+	}
 	
 }

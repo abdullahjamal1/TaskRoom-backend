@@ -10,9 +10,9 @@ public class Msg_voteId implements Serializable{
 	 */
 	private static final long serialVersionUID = -2967668917688838212L;
 	
-	private String user_id;
+	private Long user_id;
 	
-	private String msg_id;
+	private Long msg_id;
 	
 	public Msg_voteId() {
 		
@@ -34,25 +34,25 @@ public class Msg_voteId implements Serializable{
 		return Objects.hash(user_id, msg_id);
 	}
 
-	public Msg_voteId(String user_id, String msg_id) {
+	public Msg_voteId(Long user_id, Long msg_id) {
 		super();
 		this.user_id = user_id;
 		this.msg_id = msg_id;
 	}
 
-	public String getUser_id() {
+	public Long getUser_id() {
 		return user_id;
 	}
 
-	public void setUser_id(String user_id) {
+	public void setUser_id(Long user_id) {
 		this.user_id = user_id;
 	}
 
-	public String getMsg_id() {
+	public Long getMsg_id() {
 		return msg_id;
 	}
 
-	public void setMsg_id(String msg_id) {
+	public void setMsg_id(Long msg_id) {
 		this.msg_id = msg_id;
 	}
 	
