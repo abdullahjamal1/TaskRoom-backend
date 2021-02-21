@@ -164,9 +164,9 @@ for other controllers.
 
 ## EER Diagram
  v2
-![EER diagram v2](https://github.com/aj941ga/gameHub/blob/main/snapShots/game_hub_database_pic.PNG)
+![EER diagram v2](eer diagram url)
  v3
-![EER diagram v3](https://github.com/aj941ga/gameHub/blob/main/snapShots/db_png_v3.PNG)
+![EER diagram v3](eer diagram url)
 
 ## Packages
 
