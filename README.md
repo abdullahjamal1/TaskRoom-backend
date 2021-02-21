@@ -5,7 +5,10 @@ Registered Users can make profile. Comment on game feed. upvote/downvote other c
 supports mail based authentication for registeration.
 uses Jwt token based authorization
 
+### home page
 ![home_page](https://github.com/aj941ga/gameHub-backend/blob/master/snapshots/screencapture-localhost-3000-games-2021-02-21-18_56_04.png)
+
+### game page
 ![game_page](https://github.com/aj941ga/gameHub-backend/blob/master/snapshots/gamePage.png)
 
 ## supports 
