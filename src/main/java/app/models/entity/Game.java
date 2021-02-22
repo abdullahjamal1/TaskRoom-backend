@@ -27,6 +27,8 @@ public class Game{
 	private Long genre_id;
 	
 	private String description;
+
+	private Long downloads;
 	
 	public Game() {
 		

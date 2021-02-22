@@ -45,7 +45,7 @@ public class LocalFileService {
             LOGGER.info("img is not null");
         	
             try {        	
-                userService.createSaveDirectory(saveDirectory);
+                createSaveDirectory(saveDirectory);
 
                 for(int i = 1; i <= images.length; i++){
     
@@ -75,7 +75,7 @@ public class LocalFileService {
         	
 	            try {
 	                byte[] bytes = file.getBytes();
-	                userService.createSaveDirectory(filePath);
+	                createSaveDirectory(filePath);
 	                
 	                BufferedOutputStream stream =
 	                        new BufferedOutputStream(new FileOutputStream(new File(filePath + game_id)));
@@ -91,6 +91,23 @@ public class LocalFileService {
             // }
         }
         
+    }
+
+    public void createSaveDirectory(final String saveDirectory) {
+
+        final File test = new File(saveDirectory);
+
+        if (!test.exists()) {
+
+            try {
+
+                test.mkdirs();
+
+            } catch (final Exception e) {
+
+                LOGGER.error("Error creating user directory", e);
+            }
+        }
     }
 
     public int getGameImages(Long game_id) throws IOException {

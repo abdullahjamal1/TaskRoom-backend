@@ -39,8 +39,8 @@ public interface GameInfo extends GameInfoAbstract{
 	/*
 	*  from genre User
 	*/
-    public String getUser_name();
-    public void setUser_name(final String name);
+    public String getUsername();
+    public void setUsername(final String name);
 
 	// custom
 

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -74,41 +75,37 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public User updateUserById(@PathVariable("id") final Long id,
+    public ResponseEntity<User> updateUserById(@PathVariable("id") final Long id,
                     @RequestBody final User user,
                     @RequestHeader(name="Authorization") String token
                     ) {
 
         if (jwtUtil.extractUserId(token) == id) {
 
-            return userService.saveUser(user);
+            return ResponseEntity.ok(userService.saveUser(user));
 
         } else {
             // unauthorized
-            return null;
+            return ResponseEntity.status(403).body(null);
         }
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable("id") Long id,
+    public ResponseEntity<Object> delete(@PathVariable("id") Long id,
     @RequestHeader(name="Authorization") String token) {
 
-        if(jwtUtil.extractUserId(token) == id)
+        if(jwtUtil.extractUserId(token) == id || userService.isAdmin(token)){
             userService.delete(id);
+            return ResponseEntity.ok(null);
+        }
+        else return ResponseEntity.status(403).body(null);
     }
 
     @PostMapping("/avatar")
-    public String handleFileUpload(@RequestParam("file") final MultipartFile file,
+    public void handleFileUpload(@RequestParam("file") final MultipartFile file,
     @RequestHeader(name="Authorization") String token) {
 
-        return userService.handleFileUpload(file, token);
-
+        userService.handleFileUpload(file, token);
     }
 
-    @GetMapping(value = "{user_id}/avatar", produces = MediaType.IMAGE_JPEG_VALUE)
-    public @ResponseBody byte[] profilePicture(@PathVariable("user_id") Long user_id) throws IOException {
-
-        return userService.handleFileSend(user_id);
-
-    }
 }

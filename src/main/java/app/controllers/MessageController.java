@@ -3,6 +3,7 @@ package app.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -53,7 +54,7 @@ public class MessageController{
 	 */
 	
 	@PutMapping("/{msg_id}/vote")
-	public void voteMessageById(@PathVariable("msg_id") Long msg_id,
+	public void voteMessage(@PathVariable("msg_id") Long msg_id,
 	@RequestParam boolean vote,
 	@RequestHeader(name="Authorization") String token
 	) {
@@ -82,10 +83,16 @@ public class MessageController{
 	 */
 	
 	@DeleteMapping("/{msg_id}")
-	public int deleteMessageById(@PathVariable("msg_id") Long msg_id
+	public ResponseEntity<Object> deleteMessage(@PathVariable("msg_id") Long msg_id
 									,@RequestHeader(name="Authorization") String token) {
 		
-		return messageService.deleteMessageById(msg_id, jwtUtil.extractUserId(token));
+		if(messageService.isMessageAuthorOrAdmin(msg_id, jwtUtil.extractUserId(token))){
+
+			messageService.deleteMessageById(msg_id, jwtUtil.extractUserId(token));
+			return ResponseEntity.ok(null);
+		}
+
+		else return ResponseEntity.status(403).body("un-authorized to delete the resource");
 	}
 	
 }

@@ -1,15 +1,17 @@
 package app.controllers;
 
+import java.net.URI;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,8 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import app.configs.ApplicationConfig;
 import app.models.entity.AuthenticationRequest;
 import app.models.entity.AuthenticationResponse;
+import app.models.entity.RegisterationRequest;
 import app.models.entity.User;
 import app.repositories.UserRepository;
 import app.services.MailService;
@@ -57,14 +61,15 @@ public class AuthController {
 	private AuthenticationManager authenticationManager;
     
 	@Autowired
-	private JwtUtil jwtTokenUtil;
+	private JwtUtil jwtUtil;
     
 	@Autowired
 	private UserService userDetailsService;
+
+    @Autowired
+    private ApplicationConfig config;
     
     public static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
-
-    
 
 	@PostMapping("/login")
 	public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
@@ -82,119 +87,109 @@ public class AuthController {
 		final UserDetails userDetails = userDetailsService
 				.loadUserByUsername(authenticationRequest.getUsername());
 
-		final String jwt = jwtTokenUtil.generateToken(userDetails);
+		final String jwt = jwtUtil.generateToken(userDetails);
 
 		return ResponseEntity.ok(new AuthenticationResponse(jwt));
 	}
 
     // try catch dosnt work properly
     @PostMapping("/register")
-    public String registerUser(@RequestBody User user) {
+    public ResponseEntity<String> registerUser(@RequestBody RegisterationRequest user) {
 
-        User registeredUser = userService.register(user);
+        User registeredUser = new User();
+        registeredUser.setEmail(user.getEmail());
+        registeredUser.setPassword(user.getPassword());
+        registeredUser.setUsername(user.getUsername());
+        registeredUser = userService.register(registeredUser);
 
         if (registeredUser != null) {
+
             try{
 
                 mailService.sendNewRegistration(user.getEmail(), registeredUser.getToken());
             }
             catch(Error er) {
+
                 userService.delete(registeredUser.getId());
-                return er.toString();
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(er.toString());
             }
 
-            return "activation mail sent successfully";
+            return ResponseEntity.ok("activation mail sent successfully");
         }
-        return "user already registered";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("user already registered");
     }
 
     @PostMapping("/reset-password")
     // type email to receive input
-    public String resetPasswordEmailPost(@RequestBody User user) {
+    public ResponseEntity<String> resetPasswordEmail(@RequestParam String email) {
 
-        final User u = userRepository.findOneByEmail(user.getEmail());
+        final User user = userRepository.findOneByEmail(email);
 
-        if (u == null) {
-
-            // return error
-            return "user/reset-password";
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("not found");
 
         } else {
 
-            final String resetToken = userService.createActivationToken(u, true);
-
-            // LOGGER.debug("Resetting password for user: {}, new token: {}",
-            // user.getEmail(), resetToken);
-            
+            final String resetToken = userService.createActivationToken(user, true);
             mailService.sendResetPassword(user.getEmail(), user.getFirstName(), resetToken);
         }
-        return "user/reset-password-sent";
+        return ResponseEntity.ok("password-reset link sent successfully to " + email);
     }
-    
-    @GetMapping("/user/reset-password-change")
-    
-    public String resetPasswordChange(final User user, final BindingResult result, final Model model) {
-
-        final User u = userRepository.findOneByToken(user.getToken());
-        
-        if (user.getToken().equals("1") || u == null) {
-        	
-            result.rejectValue("activation", "error.doesntExist", "We could not find this reset password request.");
-            
-        } else {
-        	
-            model.addAttribute("userName", u.getUserName());
-        }
-        return "user/reset-password-change";
-    } 
     
     // post new password
     @PostMapping("/reset-password-change")
-    public String resetPasswordChangePost(@RequestBody User user) {
+    public ResponseEntity<String> resetPassword(@RequestParam String password,
+    @RequestParam String token) {
 
-        final boolean isChanged = userService.resetPassword(user);
+        User user = userService.activate(token);
 
-        if (isChanged) {
-            return "success";
+        if(user == null){
 
-        } else {
-
-            return "user/reset-password-change";
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("activation code not valid");
         }
+
+        user.setPassword(password);
+        userService.resetPassword(user);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(config.getFrontendUrl() + "/games"));
+        // to redirect user
+        return new ResponseEntity<>(headers, HttpStatus.MOVED_PERMANENTLY);
+
     }
 
     @GetMapping("/activate")
-    public String activate(@RequestParam String activation) {
+    public ResponseEntity<String> activate(@RequestParam String activation) {
 
         final User u = userService.activate(activation);
-
+ 
         if (u != null) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setLocation(URI.create(config.getFrontendUrl() + "/games"));
 
-            return "Account successfully activated, please login";
+            // to redirect user
+            return new ResponseEntity<>(headers, HttpStatus.MOVED_PERMANENTLY);
         }
-        return "redirect:/error?message=Could not activate with this activation code, please contact support";
-    }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("activation token is not valid");
+    } 
+
+    // ==============================================================================================
     
     // for changing verified mail for registered user
-    @PostMapping("/activation-send")
-    public String activationSendPost(final User user)
+    @PostMapping("/resend-activation")
+    public ResponseEntity<Object> activationSendPost(@RequestParam String email)
     {
-
-        final User u = userService.resetActivation(user.getEmail());
+        final User u = userService.resetActivation(email);
 
         if (u != null){
 
         mailService.sendNewActivationRequest(u.getEmail(), u.getToken());
 
-        return "/activation-sent";
+        return ResponseEntity.ok("activation mail sent !");
 
-        } else {
-
-        // result.rejectValue("email", "error.doesntExist", "We could not find this
-        // email in our databse");
-
-        return "/activation-send";
         }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("user with email "+ email + " not found");
     }
 
 }

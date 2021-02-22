@@ -28,6 +28,8 @@ public class ApplicationConfig {
 
     private boolean userVerification;
 
+    private String frontendUrl;
+
     // public String getSecret() {
 
     // return secret;

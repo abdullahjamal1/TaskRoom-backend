@@ -19,7 +19,7 @@ public class User extends AbstractEntity{
 
     @NotNull
     @Size(min = MIN_CHARS, max = MAX_CHARS, message = "Username must be at least 3 characters.")
-    private String userName;
+    private String username;
 
     @NotNull
     @Size(min = MIN_CHARS, max = MAX_CHARS, message = "Password must be at least 3 characters.")
@@ -42,8 +42,8 @@ public class User extends AbstractEntity{
 
     private String lastLogin;
     
-    public User(String userName, String password){
-        this.userName = userName;
+    public User(String username, String password){
+        this.username = username;
         this.password = password;
     }
 
@@ -51,14 +51,14 @@ public class User extends AbstractEntity{
         
     }
 
-    public String getUserName() {
+    public String getUsername() {
 
-        return userName;
+        return username;
     }
 
-    public void setUserName(final String name) {
+    public void setUsername(final String name) {
 
-        this.userName = name;
+        this.username = name;
     }
 
 

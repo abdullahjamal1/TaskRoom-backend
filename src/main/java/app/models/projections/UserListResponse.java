@@ -10,8 +10,8 @@ public interface UserListResponse {
     public Instant getCreation_time();
     public void setCreation_time(final Instant creationTime);
     
-    public String getUser_name();
-    public void setUser_name(final String name);
+    public String getUsername();
+    public void setUsername(final String name);
 
     public String getFirst_name();
     public void setFirst_name(final String First_name);

@@ -35,8 +35,8 @@ public interface MessageInfo {
      *  From User Entity
      */
     
-    public String getUser_name();
-    public void setUser_name(String name);
+    public String getUsername();
+    public void setUsername(String name);
     
     /*
      *  custom

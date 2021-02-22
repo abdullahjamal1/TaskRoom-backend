@@ -9,4 +9,4 @@ users/
 *.db
 .checkstyle
 *.properties
-fileSystem/
+src/main/resources/fileSystem

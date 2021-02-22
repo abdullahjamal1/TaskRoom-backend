@@ -1,22 +1,16 @@
 package app.controllers;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
-import javax.net.ssl.SSLEngineResult.Status;
-
-import com.fasterxml.jackson.databind.ser.std.StdArraySerializers.IntArraySerializer;
-
 import org.apache.catalina.connector.Response;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -25,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,6 +27,7 @@ import app.models.projections.GameInfo;
 import app.models.projections.GameInfoAbstract;
 import app.repositories.GameRepository;
 import app.services.GameService;
+import app.services.UserService;
 import app.util.JwtUtil;
 
 /**
@@ -56,6 +50,9 @@ public class GameController {
 
 	@Autowired
 	private JwtUtil jwtUtil;
+
+	@Autowired 
+	private UserService userService;
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
     
@@ -83,35 +80,25 @@ public class GameController {
 		gameService.rateGame(game_id, rating, jwtUtil.extractUserId(token));
 	}
 
-	//=======================================================================
 	/**
-	 * allow to delete the game if the request is sent by author or admin
+	 * allows to delete the game if the request is sent by author or admin
 	 * @param game_id
 	 * @return
-	 * 
 	 */
 	@DeleteMapping("/{game_id}")
-	public String deleteGameById(@PathVariable Long game_id,
+	public ResponseEntity<Object> deleteGameById(@PathVariable Long game_id,
 	@RequestHeader(name="Authorization") String token) {
 		
-			try {
+		if(gameService.findGameById(game_id).getUser_id().equals(jwtUtil.extractUserId(token)) ||
+			userService.isAdmin(token)){
 			
-        	gameRepo.deleteById(game_id);
-        	
-			}
-			catch(Exception e) {
-				
-				return "error occurred while deleting resource" + e.toString();
-			}
-			return null;
-	}
-	
-	@GetMapping(value="/{game_id}/file",
-	produces=MediaType.MULTIPART_MIXED_VALUE)
-	public @ResponseBody byte[] getGameFileById(@PathVariable("game_id") Long game_id)
-			throws FileNotFoundException, IOException {
-		
-		return gameService.getGameFile(game_id);
+			gameService.delete(game_id);
+			return ResponseEntity.ok(null);
+		}
+		else{
+			// unAuthorized
+			return ResponseEntity.status(HttpStatus.SC_FORBIDDEN).body(null);
+		}
 	}
 	
 	/*
@@ -122,35 +109,26 @@ public class GameController {
 		
 		return gameService.getGameImages(game_id);
 	}
-		
-	@GetMapping(value="/{game_id}/images/{id}",
-	produces = MediaType.IMAGE_JPEG_VALUE)
-	public @ResponseBody byte[] getGameImage(@PathVariable("game_id") Long game_id,
-	@PathVariable("id") Long imageId) throws IOException {
-		
-		return gameService.getGameImage(game_id, imageId);
-	}
 	
 	@PostMapping(value="/file")
 	@PutMapping(value="/file")
-	public IntArraySerializer createNewGame(
+	public ResponseEntity<Object> createNewGame(
 								@RequestParam(name="game_id") Long game_id, 
 								@RequestPart("images[]") MultipartFile[] images,
 								@RequestPart("gameFile") MultipartFile gameFile,
 								@RequestHeader(name="Authorization") String token
 								) {
 
-									Response response = new Response();
-
 		if(gameService.findGameById(game_id).getUser_id() == jwtUtil.extractUserId(token)){
 
 			gameService.uploadFile( game_id, images, gameFile);
-			return Response.SC_OK;
+			return ResponseEntity.status(HttpStatus.SC_OK).body(null);
 		}
 			
 		else 
-			return Response.SC_UNAUTHORIZED;
+			return ResponseEntity.status(HttpStatus.SC_FORBIDDEN).body(null);
 	}
+
 
 	@PostMapping("")
 	@PutMapping("")
@@ -158,8 +136,26 @@ public class GameController {
 
 		game.setUser_id(jwtUtil.extractUserId(token));
 		game.setGame_id(null);
+		game.setDownloads(null);
 		return gameRepo.save(game);
 	}
 
+
+		// @GetMapping(value="/{game_id}/file",
+	// produces=MediaType.MULTIPART_MIXED_VALUE)
+	// public @ResponseBody byte[] getGameFileById(@PathVariable("game_id") Long game_id)
+	// 		throws FileNotFoundException, IOException {
+		
+	// 	return gameService.getGameFile(game_id);
+	// }
+
+		// @GetMapping(value="/{game_id}/images/{id}",
+	// produces = MediaType.IMAGE_JPEG_VALUE)
+	// public @ResponseBody byte[] getGameImage(@PathVariable("game_id") Long game_id,
+	// @PathVariable("id") Long imageId) throws IOException {
+		
+	// 	return gameService.getGameImage(game_id, imageId);
+	// }
+	
 	
 }

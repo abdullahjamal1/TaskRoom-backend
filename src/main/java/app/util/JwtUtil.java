@@ -33,7 +33,7 @@ public class JwtUtil {
     }
 
     public Long extractUserId(String token) {
-        return userRepository.findOneByUserName(extractUsername(token)).getId();
+        return userRepository.findOneByUsername(extractUsername(token)).getId();
     }
 
     public Date extractExpiration(String token) {

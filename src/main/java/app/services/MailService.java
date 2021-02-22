@@ -6,11 +6,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import app.configs.ApplicationConfig;
 import app.models.entity.User;
 
 @Service
+@EnableAsync
 public class MailService {
 
     @Autowired
@@ -21,6 +24,7 @@ public class MailService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(MailService.class);
 
+    @Async
     public void sendMail(final String to, final String subject, final String text) {
 
         try {
@@ -40,17 +44,17 @@ public class MailService {
             LOGGER.error("Error sending email", e);
         }
     }
+    @Async
+    public void sendResetPassword(final String to, String username, final String token) {
 
-    public void sendResetPassword(final String to, String userName, final String token) {
-
-        final String url = config.getUrl() + "/auth/reset-password-change?token=" + token;
+        final String url = config.getFrontendUrl() + "/reset-password-change?token=" + token;
         final String subject = "Reset Password";
-        final String text = "hey " + userName + " !\n\n" + "Welcome to game-hub \n"
+        final String text = "hey " + username + " !\n\n" + "Welcome to game-hub \n"
                 + "Please click the following link to reset your password: " + url
                 + "\n\n Happy Coding! \n The game-Hub developer Team";
         sendMail(to, subject, text);
     }
-
+    @Async
     public void sendNewRegistration(final String to, final String token) {
 
         final String url = config.getUrl() + "/auth/activate?activation=" + token;
@@ -59,12 +63,13 @@ public class MailService {
                 + url + "\n\n Happy Coding! \n The game-Hub developer Team";
         sendMail(to, subject, text);
     }
-
+    @Async
     public void sendNewActivationRequest(final String to, final String token) {
 
         sendNewRegistration(to, token);
     }
 
+    @Async
     public void sendErrorEmail(final Exception exception, final HttpServletRequest req, final User user) {
 
         final String subject = "Application Error: " + req.getRequestURL();

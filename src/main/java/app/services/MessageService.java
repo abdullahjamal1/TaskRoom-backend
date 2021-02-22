@@ -23,18 +23,9 @@ public class MessageService {
 	@Autowired
 	private Msg_voteRepository voteRepo;
 
-	public int deleteMessageById(Long msg_id, Long user_id) {
-
-		if (isMessageAuthorOrAdmin(msg_id, user_id)) {
+	public void deleteMessageById(Long msg_id, Long user_id) {
 
 			messageRepo.deleteById(msg_id);
-		}else{
-			
-			//
-			return Response.BAD;
-		}
-
-		return Response.OK;
 	}
 
 	public void voteMessage(Long msg_id, boolean vote, Long user_id) {

@@ -24,7 +24,7 @@ public interface GameRepository extends CrudRepository<Game, Long>{
 			"WHERE g.game_id = rate.gameId or g.game_id not in (select r.game_id from ratings r) group by g.game_id ";
 	
 	public static String gameInfoQueryAdvanced = 
-			"SELECT g.*, t.type, if(g.game_id not in (select r.game_id from ratings r) , 0 , rate.rate_table)  AS rating, u.user_name, rate.ratedBy AS ratedBy "
+			"SELECT g.*, t.type, if(g.game_id not in (select r.game_id from ratings r) , 0 , rate.rate_table)  AS rating, u.username, rate.ratedBy AS ratedBy "
 			+ "FROM game g "
 			+ "JOIN genre t ON g.genre_id = t.genre_id "
 			+ "JOIN user u ON g.user_id = u.id " + 

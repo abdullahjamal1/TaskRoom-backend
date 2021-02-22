@@ -2,32 +2,13 @@ package app.services;
 
 import java.io.File;
 import java.util.List;
-import javax.servlet.http.HttpSession;
+
 import org.apache.commons.io.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.text.Format;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
-import javax.imageio.ImageIO;
-import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
-
-import org.apache.commons.io.IOUtils;
-import org.imgscalr.Scalr;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -57,6 +38,9 @@ public class UserService implements UserDetailsService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private AmazonS3ClientService amazonS3ClientService;
+
     public static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
     /**
@@ -71,7 +55,7 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
 
-        final User user = userRepo.findOneByUserNameOrEmail(username, username);
+        final User user = userRepo.findOneByUsernameOrEmail(username, username);
 
         // if user not found
         if (user == null) {
@@ -87,7 +71,7 @@ public class UserService implements UserDetailsService {
 
         final List<GrantedAuthority> auth = AuthorityUtils.commaSeparatedStringToAuthorityList(user.getRole());
 
-        return new org.springframework.security.core.userdetails.User(user.getUserName(), user.getPassword(), auth);
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), auth);
     }
 
     /**
@@ -101,11 +85,11 @@ public class UserService implements UserDetailsService {
      * @return
      */
 
-    public User register(final User user) {
+    public User register(User user) {
 
         user.setPassword(encodeUserPassword(user.getPassword()));
 
-        if (userRepo.findOneByUserName(user.getUserName()) == null
+        if (userRepo.findOneByUsername(user.getUsername()) == null
                 && userRepo.findOneByEmail(user.getEmail()) == null) {
 
             final String activation = createActivationToken(user, false);
@@ -116,8 +100,9 @@ public class UserService implements UserDetailsService {
 
             return user;
         }
-
-        return null;
+        else{
+            return null;
+        }
     }
 
     /**
@@ -189,7 +174,7 @@ public class UserService implements UserDetailsService {
 
     public String createActivationToken(final User user, final boolean save) {
 
-        String toEncode = user.getEmail() + user.getUserName() + config.getSecret();
+        String toEncode = user.getEmail() + user.getUsername() + config.getSecret();
 
         final String activationToken = DigestUtils.md5DigestAsHex(toEncode.getBytes(Charsets.UTF_8));
 
@@ -232,7 +217,7 @@ public class UserService implements UserDetailsService {
 
     public Boolean resetPassword(User user) {
 
-        final User u = userRepo.findOneByUserName(user.getUserName());
+        final User u = userRepo.findOneByUsername(user.getUsername());
 
         if (u != null) {
 
@@ -250,84 +235,28 @@ public class UserService implements UserDetailsService {
      * @param userName
      */
 
-    public void updateLastLogin(String userName) {
+    public void updateLastLogin(String username) {
 
-        userRepo.updateLastLogin(userName);
-    }
-
-
-    public void createSaveDirectory(final String saveDirectory) {
-
-        final File test = new File(saveDirectory);
-
-        if (!test.exists()) {
-
-            try {
-
-                test.mkdirs();
-
-            } catch (final Exception e) {
-
-                LOGGER.error("Error creating user directory", e);
-            }
-        }
+        userRepo.updateLastLogin(username);
     }
 
     public User saveUser(User user) {
         return userRepo.save(user);
     }
 
-    public String handleFileUpload(MultipartFile file, String token) {
+    public boolean isAdmin(String token){
 
-        // final Format formatter = new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss");
-        // final String fileName = formatter.format(Calendar.getInstance().getTime()) + "_thumbnail.jpg";
-        final User user = userRepo.findOneByUserName(jwtUtil.extractUsername(token));
-
-        if (!file.isEmpty()) {
-
-            try {
-                final String saveDirectory = config.getUserRoot() + File.separator + "users" + File.separator + user.getId() + ".jpg";
-                createSaveDirectory(saveDirectory);
-
-                final byte[] bytes = file.getBytes();
-
-                final ByteArrayInputStream imageInputStream = new ByteArrayInputStream(bytes);
-                final BufferedImage image = ImageIO.read(imageInputStream);
-                final BufferedImage thumbnail = Scalr.resize(image, 200);
-
-                final File thumbnailOut = new File(saveDirectory);
-                ImageIO.write(thumbnail, "png", thumbnailOut);
-
-                // log.debug("Image Saved::: {}", fileName);
-
-            } catch (final Exception e) {
-
-                // log.error("Error Uploading File", e);
-            }
-        }
-        return "redirect:/user/edit/" + user.getId();
+        if(userRepo.findOneByUsername(jwtUtil.extractUsername(token)).getRole().equals("ADMIN"))
+            return true;
+        else return false;
     }
 
-    public byte[] handleFileSend(Long user_id) throws FileNotFoundException, IOException {
+    public void handleFileUpload(MultipartFile file, String token) {
 
-        final String profilePicture = config.getUserRoot() + File.separator + "users" + File.separator + user_id + ".jpg";
+        final User user = userRepo.findOneByUsername(jwtUtil.extractUsername(token));
+        String userPath = "users/" + user.getId() +"/";
 
-        try{
-
-            if (new File(profilePicture).exists()) {
-    
-                return IOUtils.toByteArray(new FileInputStream(profilePicture));
-    
-            }
-        }
-         catch (FileNotFoundException f) {
-            //TODO: handle exception
-            LOGGER.info("file not found" + f);
-        }
-        catch(IOException io){
-            LOGGER.info("io" + io);
-        }
-
-        return null;
+        this.amazonS3ClientService.uploadFileToS3Bucket(file, userPath + user.getId() + ".jpg", true);      
     }
+
 }

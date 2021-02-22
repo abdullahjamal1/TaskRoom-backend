@@ -21,18 +21,18 @@ import app.models.projections.UserResponse;
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
 
-    User findOneByUserName(String name);
+    User findOneByUsername(String name);
 
     User findOneByEmail(String email);
 
-    User findOneByUserNameOrEmail(String username, String email);
+    User findOneByUsernameOrEmail(String username, String email);
 
     User findOneByToken(String token);
     
-    @Query(value = "select u.id, u.creation_time, u.user_name, u.first_name, u.last_name, u.role from user u where u.id = :id ;", nativeQuery = true)
+    @Query(value = "select u.id, u.creation_time, u.username, u.first_name, u.last_name, u.role from user u where u.id = :id ;", nativeQuery = true)
     UserResponse findOneById(@Param("id") Long id);
 
-    public static String findAllQuery = "select u.id, u.creation_time, u.user_name, u.first_name, u.last_name, statistic.uploads" +
+    public static String findAllQuery = "select u.id, u.creation_time, u.username, u.first_name, u.last_name, statistic.uploads" +
     " FROM user u, " +
     " (select count(*) as uploads, g.user_id as id from game g group by g.user_id) as statistic" +
     " where statistic.id = u.id ;";
@@ -48,7 +48,7 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
     @Modifying
     @Transactional
-    @Query("update User u set u.lastLogin = CURRENT_TIMESTAMP where u.userName = ?1")
-    int updateLastLogin(String userName);
+    @Query("update User u set u.lastLogin = CURRENT_TIMESTAMP where u.username = ?1")
+    int updateLastLogin(String username);
 
 }

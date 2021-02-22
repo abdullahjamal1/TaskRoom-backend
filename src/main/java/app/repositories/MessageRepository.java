@@ -1,12 +1,11 @@
 package app.repositories;
 import java.util.List;
 
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
+
 import app.models.entity.Message;
 import app.models.projections.MessageInfo;
 
@@ -21,7 +20,7 @@ public interface MessageRepository extends CrudRepository<Message, Long>{
 	Long findAuthorByMessageId(Long msg_id);
 	
 	public static String queryfindAllMessagesByGameId = "SELECT m.msg_id, m.user_id, m.description, m.creation_time " + 
-			",u.user_name, uc.upvotes as up_votes, (dc.downvotes - uc.upvotes) as down_votes " + 
+			",u.username, uc.upvotes as up_votes, (dc.downvotes - uc.upvotes) as down_votes " + 
 			"FROM message m " + 
 			"JOIN user u ON u.id = m.user_id " + 
 			",(select sum(v.did_upvote) as upvotes, v.msg_id as id from msg_vote v group by v.msg_id) AS uc " + 
