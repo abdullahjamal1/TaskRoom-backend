@@ -110,7 +110,7 @@ public class AuthController {
             }
             catch(Error er) {
 
-                userService.delete(registeredUser.getId());
+                userService.delete(registeredUser.getUsername());
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(er.toString());
             }
 
@@ -131,7 +131,7 @@ public class AuthController {
         } else {
 
             final String resetToken = userService.createActivationToken(user, true);
-            mailService.sendResetPassword(user.getEmail(), user.getFirstName(), resetToken);
+            mailService.sendResetPassword(user.getEmail(), user.getName(), resetToken);
         }
         return ResponseEntity.ok("password-reset link sent successfully to " + email);
     }

@@ -1,6 +1,5 @@
 package app.services;
 
-import java.io.File;
 import java.util.List;
 
 import org.apache.commons.io.Charsets;
@@ -15,7 +14,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import app.Application;
 import app.configs.ApplicationConfig;
@@ -38,8 +36,6 @@ public class UserService implements UserDetailsService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @Autowired
-    private AmazonS3ClientService amazonS3ClientService;
 
     public static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
@@ -89,8 +85,7 @@ public class UserService implements UserDetailsService {
 
         user.setPassword(encodeUserPassword(user.getPassword()));
 
-        if (userRepo.findOneByUsername(user.getUsername()) == null
-                && userRepo.findOneByEmail(user.getEmail()) == null) {
+        if (userRepo.findByUsername(user.getUsername()) == null && userRepo.findOneByEmail(user.getEmail()) == null) {
 
             final String activation = createActivationToken(user, false);
 
@@ -99,8 +94,7 @@ public class UserService implements UserDetailsService {
             this.userRepo.save(user);
 
             return user;
-        }
-        else{
+        } else {
             return null;
         }
     }
@@ -126,9 +120,9 @@ public class UserService implements UserDetailsService {
      * @return returns true if user deletion is successful
      */
 
-    public void delete(Long id) {
-        
-        userRepo.deleteById(id);
+    public void delete(String username) {
+
+        userRepo.deleteByUsername(username);
 
     }
 
@@ -217,7 +211,7 @@ public class UserService implements UserDetailsService {
 
     public Boolean resetPassword(User user) {
 
-        final User u = userRepo.findOneByUsername(user.getUsername());
+        final User u = userRepo.findByUsername(user.getUsername());
 
         if (u != null) {
 
@@ -229,34 +223,18 @@ public class UserService implements UserDetailsService {
         return false;
     }
 
-    /**
-     * updates login TIME_STAMP for userName in database
-     * 
-     * @param userName
-     */
-
-    public void updateLastLogin(String username) {
-
-        userRepo.updateLastLogin(username);
-    }
 
     public User saveUser(User user) {
         return userRepo.save(user);
     }
 
-    public boolean isAdmin(String token){
+    public boolean isAdmin(String token) {
 
-        if(userRepo.findOneByUsername(jwtUtil.extractUsername(token)).getRole().equals("ADMIN"))
+        if (userRepo.findByUsername(jwtUtil.extractUsername(token)).getRole().equals("ADMIN"))
             return true;
-        else return false;
+        else
+            return false;
     }
 
-    public void handleFileUpload(MultipartFile file, String token) {
-
-        final User user = userRepo.findOneByUsername(jwtUtil.extractUsername(token));
-        String userPath = "users/" + user.getId() +"/";
-
-        this.amazonS3ClientService.uploadFileToS3Bucket(file, userPath + user.getId() + ".jpg", true);      
-    }
 
 }

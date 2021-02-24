@@ -10,5 +10,3 @@ users/
 .checkstyle
 *.properties
 src/main/resources/fileSystem/*
-src/main/resources/templates/
-src/main/webapp/

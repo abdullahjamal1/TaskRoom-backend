@@ -76,4 +76,26 @@ public class MailService {
         final String text = "An error occured in your application: " + exception + "\r\nFor User:  " + user.getEmail();
         sendMail(config.getEmailSupport(), subject, text);
     }
+
+    @Async
+    public void sendInvite(final String to, String username, String groupName, String groupAdmin, final String token) {
+
+        final String url = config.getUrl() + "/groups/join?token=" + token;
+        final String subject = "Group Invite";
+        final String text = "hey " + username + " !\n\n" + "Welcome to TaskTeam, \n"
+                + "You have been invited by " + groupAdmin + " to join " + groupName + " \njoining link " + url;
+        sendMail(to, subject, text);
+    }
+
+    @Async
+    public void sendTaskNotification( String to, String username, String groupName, String taskAuthor, String taskShortDescription,
+                                    String taskId, String groupId ) {
+
+        final String url = config.getUrl() + "/tasks/" + taskId + "?groupId=" + groupId;
+        final String subject = "Group Invite";
+        final String text = "hey " + username + ",\n"
+                 + taskAuthor + " has posted a new task in " + groupName + " \n task Link => " + url;
+        sendMail(to, subject, text);
+    }
+
 }
