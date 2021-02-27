@@ -1,4 +1,4 @@
-package app.models.entity;
+package app.models.collections;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -22,7 +22,7 @@ public class Comment {
     private String _id;
     private String Author;
     private String comment;
-    private Timestamp creationTime;
+    private Date creationTime;
     private String taskId;
     private String parentId;
 
@@ -31,7 +31,6 @@ public class Comment {
         this.comment = comment;
         this.parentId = parentId;
         this.Author = username;
-        Date date = new Date();
-        this.creationTime = new Timestamp(date.getTime());   
+        this.creationTime = new Date();   
     }
 }

@@ -4,8 +4,6 @@ import java.util.List;
 
 import javax.websocket.server.PathParam;
 
-import com.amazonaws.services.xray.model.Http;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import app.models.entity.Task;
+import app.models.collections.Task;
 import app.models.entity.TaskRequest;
-import app.repositories.GroupRepository;
 import app.repositories.TaskRepository;
 import app.services.GroupService;
 import app.services.TaskService;
@@ -49,23 +46,42 @@ public class TaskController {
     private JwtUtil jwtUtil;
 
 
+    
+        /*
+        *   @Param String groupId
+        *   @Param String sortBy  => can take values {updateTime, dueTime, completed, default}
+        *                           default value = "default"
+        *
+        *   @Param String sortOrder => can take value {ASC, DESC}  default = "ASC"
+        *
+        *   @Param Integer page,  default value = 0
+        *
+        *   @Param Integer perPage  default value = 10
+        */
     @GetMapping("")
-    public ResponseEntity<List<Task>> findAllTasks(@RequestParam("groupId") String id,
-                                                    @RequestHeader(name="Authorization") String token) {
+    public ResponseEntity<List<Task>> findAllTasks(
+                                                    @RequestHeader(name="Authorization") String token,
+                                                    @RequestParam("groupId") String groupId,
+                                                    @RequestParam(name="sortBy",required = false, defaultValue = "default") String sortBy,
+                                                    @RequestParam(name="sortOrder", required = false, defaultValue = "ASC") String sortOrder,
+                                                    @RequestParam(name="page", required = false, defaultValue = "0") int page,
+                                                    @RequestParam(name="perPage", required = false, defaultValue = "10") int perPage) {
 
-        if(groupService.isMember(id, token))
-            return ResponseEntity.ok(taskRepository.findByGroupId(id));
+        if(groupService.isMember(groupId, token))
+            return ResponseEntity.ok(taskRepository.findByGroupId(groupId));
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTask(@PathVariable("id") String id,
-                        @PathParam("groupId") String groupId,
-                        @RequestHeader(name="Authorization") String token) {
+    public ResponseEntity<Task> getTask(
+                        @PathVariable("id") String id,
+                        @RequestHeader(name="Authorization") String token
+                        ){
 
-        if(groupService.isMember(groupId, token))
-            return ResponseEntity.ok(taskRepository.findOneBy_idAndGroupId(id, groupId));
+
+        if(groupService.isMember(id, token))
+            return ResponseEntity.ok(taskRepository.findOneBy_id(id));
       
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
     }
@@ -98,11 +114,9 @@ public class TaskController {
                     @RequestHeader(name="Authorization") String token
                     ) {
         
-        if (jwtUtil.extractUsername(token) == taskRepository.findAuthorBy_id(id)) {
+        if (jwtUtil.extractUsername(token).equals(taskService.findAuthorBy_id(id))) {
 
-            Task task = taskRepository.findOneBy_id(id);
-            task.setDescription(taskRequest.getDescription());
-            return ResponseEntity.ok(taskRepository.save(task));
+            return ResponseEntity.ok(taskService.updateTask(taskRequest, id));
 
         } else {
   
@@ -117,10 +131,10 @@ public class TaskController {
         @PathVariable("id") String _id,
     @RequestHeader(name="Authorization") String token) {
 
-        if(jwtUtil.extractUsername(token) == taskRepository.findOneBy_id(_id).getAuthor() 
+        if(jwtUtil.extractUsername(token).equals(taskRepository.findOneBy_id(_id).getAuthor()) 
         || userService.isAdmin(token)){
           
-            groupService.deleteGroup(_id);
+            taskService.deleteTask(_id);
             return ResponseEntity.ok(null);
         }
         else return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);

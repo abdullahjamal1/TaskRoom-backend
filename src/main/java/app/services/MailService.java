@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import app.configs.ApplicationConfig;
-import app.models.entity.User;
+import app.models.collections.User;
 
 @Service
 @EnableAsync

@@ -3,9 +3,11 @@ package app.repositories;
 import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import app.models.entity.User;
+import app.models.collections.User;
+import app.models.entity.UsernamesResponse;
 
 @Repository
 public interface UserRepository extends MongoRepository<User, String> {
@@ -20,10 +22,10 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     User findOneByUsername(String extractUsername);
 
-    List<User> findAll();
-
 	void deleteByUsername(String username);
 
-	String findEmailByUsername(String username);
+	List<User> findByToken(String string);
+
+	User findByEmail(String extractUsername);
 
 }

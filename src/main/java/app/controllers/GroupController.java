@@ -7,6 +7,7 @@ import javax.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,31 +16,28 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import app.models.entity.Group;
+import app.models.collections.Group;
 import app.models.entity.GroupRequest;
-import app.repositories.GroupRepository;
 import app.services.GroupService;
 import app.services.UserService;
 import app.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 
 @RestController
 @RequestMapping("/groups")
 public class GroupController {
     
     @Autowired
-    private GroupRepository groupRepository;
-
-    @Autowired
-    private GroupService groupService;
-
+    private JwtUtil jwtUtil;
+    
     @Autowired
     private UserService userService;
 
     @Autowired
-    private JwtUtil jwtUtil;
-
+    private GroupService groupService;
     /*
     Allow users to access group resources only if they are members
     */
@@ -48,7 +46,7 @@ public class GroupController {
     public ResponseEntity<List<Group>> findAll(@RequestHeader(name = "Authorization") String token) {
 
         if(userService.isAdmin(token))
-            return ResponseEntity.ok(groupRepository.findAll());
+            return ResponseEntity.ok(groupService.findAll());
 
         else return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
@@ -58,7 +56,7 @@ public class GroupController {
     @RequestHeader(name="Authorization") String token) {
 
         if(groupService.isMember(_id, token)){
-            return ResponseEntity.ok(groupRepository.findOneBy_id(_id));
+            return ResponseEntity.ok(groupService.findOneBy_id(_id));
         }
         else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Not member of group");
     }
@@ -79,8 +77,7 @@ public class GroupController {
                     @RequestHeader(name="Authorization") String token
                     ) {
 
-        
-        if (jwtUtil.extractUsername(token) == groupRepository.findAdminBy_id(_id)) {
+        if (jwtUtil.extractUsername(token).equals(groupService.findAdminBy_id(_id))) {
 
             return ResponseEntity.ok(groupService.updateGroup(group, _id));
 
@@ -97,7 +94,7 @@ public class GroupController {
     public ResponseEntity<Object> deleteGroup(@PathVariable("id") String _id,
     @RequestHeader(name="Authorization") String token) {
 
-        if(jwtUtil.extractUsername(token) == groupRepository.findOneBy_id(_id).getAdmin() || userService.isAdmin(token)){
+        if(jwtUtil.extractUsername(token).equals(groupService.findAdminBy_id(_id)) || userService.isAdmin(token)){
           
             groupService.deleteGroup(_id);
             return ResponseEntity.ok(null);
@@ -107,16 +104,17 @@ public class GroupController {
 
     // join
     @GetMapping("/join")
-    public ResponseEntity<Object> joinGroup(@PathParam("token") String groupToken,
-    @RequestHeader(name="Authorization") String token) {
+    public ResponseEntity<Object> joinGroup(@RequestParam("token") String groupToken) {
 
         // if token sent belongs to the sending user
-        if(jwtUtil.extractUsername(token) == jwtUtil.extractUsername(groupToken)){
-
+        
+        if( groupService.validateToken(groupToken) ){
+            
             groupService.joinGroup(groupToken);
             return ResponseEntity.ok("joined new group :)");
         }
-        else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("group token is invalid");
+        else 
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("group token is invalid");
     }
 
     // leave 

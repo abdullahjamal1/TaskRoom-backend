@@ -3,6 +3,7 @@ package app.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,9 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import app.models.entity.Comment;
+import app.models.collections.Comment;
 import app.models.entity.CommentRequest;
 import app.repositories.CommentRepository;
+import app.services.CommentService;
 import app.services.TaskService;
 import app.services.UserService;
 import app.util.JwtUtil;
@@ -26,22 +28,26 @@ import app.util.JwtUtil;
 @RequestMapping("/comments")
 public class CommentController{
 	
-	@Autowired
-	private CommentRepository commentRepo;	
-
+	
 	@Autowired
 	private JwtUtil jwtUtil;
-
+	
 	@Autowired
 	private UserService userService;
-
+	
 	@Autowired
 	private TaskService taskService;
+
+	@Autowired
+	private CommentService commentService;
+
+	@Autowired
+	private CommentRepository commentRepo;	
 	
 	@GetMapping("")
 	public ResponseEntity<?> findAllComments(
                 @RequestParam("taskId") String taskId,	
-				@RequestParam("parent_id") String parentId,
+				@RequestParam("parentId") String parentId,
 				@RequestHeader("Authorization") String token) {
 		
 		if(taskService.isMember(taskId, token)){
@@ -55,7 +61,7 @@ public class CommentController{
 	public ResponseEntity<Object> postComment(
         @RequestParam("taskId") String taskId,
         @RequestBody CommentRequest commentRequest,
-        @RequestParam("parent_id") String parentId,
+        @RequestParam("parentId") String parentId,
         @RequestHeader("Authorization") String token
 	) { 
 
@@ -78,7 +84,7 @@ public class CommentController{
 	public ResponseEntity<Object> deleteComment(@PathVariable("id") String commentId
 									,@RequestHeader(name="Authorization") String token) {
 		
-		if(userService.isAdmin(token) || commentRepo.findAuthorBy_id(commentId).equals(jwtUtil.extractUsername(token))){
+		if(userService.isAdmin(token) || commentService.findAuthorBy_id(commentId).equals(jwtUtil.extractUsername(token))){
 
             commentRepo.deleteBy_id(commentId);
 			return ResponseEntity.ok(null);

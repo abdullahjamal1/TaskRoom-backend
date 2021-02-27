@@ -1,5 +1,6 @@
 package app.services;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.Charsets;
@@ -18,7 +19,7 @@ import org.springframework.util.DigestUtils;
 import app.Application;
 import app.configs.ApplicationConfig;
 import app.controllers.AuthController;
-import app.models.entity.User;
+import app.models.collections.User;
 import app.repositories.UserRepository;
 import app.util.JwtUtil;
 
@@ -91,6 +92,8 @@ public class UserService implements UserDetailsService {
 
             user.setToken(activation);
 
+            user.setRole("User");
+
             this.userRepo.save(user);
 
             return user;
@@ -115,6 +118,8 @@ public class UserService implements UserDetailsService {
 
     /**
      * Deletes user from the database with particular id
+     * remove user from any group
+     * 
      * 
      * @param id Long : id of user to be deleted
      * @return returns true if user deletion is successful
@@ -144,13 +149,13 @@ public class UserService implements UserDetailsService {
 
             return null;
         }
-        final User u = userRepo.findOneByToken(activation);
+        final User user = userRepo.findOneByToken(activation);
 
-        if (u != null) {
+        if (user != null) {
 
-            u.setToken("1");
-            userRepo.save(u);
-            return u;
+            user.setToken("1");
+            userRepo.save(user);
+            return user;
         }
         return null;
     }
@@ -230,11 +235,22 @@ public class UserService implements UserDetailsService {
 
     public boolean isAdmin(String token) {
 
-        if (userRepo.findByUsername(jwtUtil.extractUsername(token)).getRole().equals("ADMIN"))
+        if (userRepo.findByUsername(jwtUtil.extractUsername(token)).isAdmin())
             return true;
         else
             return false;
     }
 
+    public List<String> findAll(){
+
+        List<User> users = userRepo.findAll();
+        List<String> usernames = new ArrayList<String>();
+
+        for(User user : users){
+            usernames.add(user.getUsername());
+        }
+        return usernames;
+  
+    }
 
 }

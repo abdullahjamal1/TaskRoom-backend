@@ -23,7 +23,7 @@ import app.configs.ApplicationConfig;
 import app.models.entity.AuthenticationRequest;
 import app.models.entity.AuthenticationResponse;
 import app.models.entity.RegisterationRequest;
-import app.models.entity.User;
+import app.models.collections.User;
 import app.repositories.UserRepository;
 import app.services.MailService;
 import app.services.UserService;
@@ -96,10 +96,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody RegisterationRequest user) {
 
-        User registeredUser = new User();
-        registeredUser.setEmail(user.getEmail());
-        registeredUser.setPassword(user.getPassword());
-        registeredUser.setUsername(user.getUsername());
+        User registeredUser = new User(user);
         registeredUser = userService.register(registeredUser);
 
         if (registeredUser != null) {
@@ -176,7 +173,7 @@ public class AuthController {
 
     // ==============================================================================================
     
-    // for changing verified mail for registered user
+    // for re-sending verification mail
     @PostMapping("/resend-activation")
     public ResponseEntity<Object> activationSendPost(@RequestParam String email)
     {

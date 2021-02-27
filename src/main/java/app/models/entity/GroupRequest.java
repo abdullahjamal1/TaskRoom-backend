@@ -10,8 +10,9 @@ import java.util.List;
 @NoArgsConstructor
 public class GroupRequest {
     
-    private String name;
+    private String title;
     private String description;
+    private String theme;
     private List<String> members;  //usernames of members
     private List<String> admins;
 }

@@ -13,25 +13,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import app.models.entity.User;
+import app.models.collections.User;
+import app.models.entity.UsernamesResponse;
 import app.repositories.UserRepository;
 import app.services.UserService;
 import app.util.JwtUtil;
-
-/*
- *  GET  /
- *  GET  /user/edit/{id}    ----> now PUT
- *  GET  /user/list
- *  GET  /user/delete/{id}  -----> now DELETE
- *  GET  /user/autologin
- *  POST  /user/edit  
- * 	POST  /user/upload
- *  GET  /user/profile-picture
- * 
- */
 
 @RestController
 @RequestMapping("/users")
@@ -47,25 +35,18 @@ public class UserController {
     private JwtUtil jwtUtil;
     
     public static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
-    
-    // validator
-    @GetMapping("/username")
-    public boolean isUserNameUnique(@RequestParam("username") String username){
-        if(userRepository.findOneByEmail(username) != null)
-            return false;
-        else return true;
-    }
+
 
     @GetMapping("")
-    public List<User> list() {
+    public List<String> getAllUsers() {
 
-        return userRepository.findAll();
+        return userService.findAll();
     }
 
     @GetMapping("/{username}")
     public User getUserById(@PathVariable("username") final String username) {
 
-        return userRepository.findOneByUsername(username);
+        return userRepository.findByUsername(username);
     }
 
     @PutMapping("/{username}")
