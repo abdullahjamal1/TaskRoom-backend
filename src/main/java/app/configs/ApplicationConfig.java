@@ -31,6 +31,10 @@ public class ApplicationConfig {
     private String frontendUrl;
 
     private String mongoUrl;
+
+    public String getMongoUrl(){
+        return System.getenv(this.mongoUrl).substring(1);
+    }
  
 
 }
