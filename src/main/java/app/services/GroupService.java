@@ -91,6 +91,7 @@ public class GroupService {
 
 	public Group updateGroup(GroupRequest groupRequest, String _id) {
 		
+        // extract these to group class
         Group group = groupRepository.findOneBy_id(_id);
         group.setDescription(groupRequest.getDescription());
         group.setTitle(groupRequest.getTitle());
@@ -150,8 +151,6 @@ public class GroupService {
         Group group = groupRepository.findOneBy_id(jwtUtil.extractClaim(groupToken, Claims::getId));
         User user = userRepository.findOneByEmail(jwtUtil.extractUsername(groupToken));
 
-        System.out.println(group.toString());
-        System.out.println(user.toString());
 
         List <String> members =  group.getMembers();
 

@@ -30,6 +30,7 @@ public class ApplicationConfig {
 
     private String frontendUrl;
 
+    private String mongoUrl;
  
 
 }

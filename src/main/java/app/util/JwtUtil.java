@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import app.configs.ApplicationConfig;
 import app.repositories.UserRepository;
 import app.services.UserService;
 import io.jsonwebtoken.Claims;
@@ -24,7 +25,8 @@ public class JwtUtil {
     @Autowired
     UserRepository userRepository;
     
-    private String SECRET_KEY = "secret";
+    @Autowired
+    private ApplicationConfig config;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -40,7 +42,7 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
     public Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        return Jwts.parser().setSigningKey(config.getSecret()).parseClaimsJws(token).getBody();
     }
 
     public Boolean isTokenExpired(String token) {
@@ -57,7 +59,7 @@ public class JwtUtil {
         /* exp date is set to 100 hrs */
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 100))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
+                .signWith(SignatureAlgorithm.HS256, config.getSecret()).compact();
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
