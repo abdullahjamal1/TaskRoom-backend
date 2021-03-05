@@ -33,6 +33,7 @@ public class ApplicationConfig {
     private String mongoUrl;
 
     public String getMongoUrl(){
+        System.out.println(System.getenv(this.mongoUrl).substring(1));
         return System.getenv(this.mongoUrl).substring(1);
     }
  
