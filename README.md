@@ -9,8 +9,8 @@ Supports sending group invite to members via mail. Alerts members by mail when a
 
 ## Application Screenshots
 
-![home page]()
-![]()
+![group dashboard](https://github.com/aj941ga/TaskRoom-backend/blob/master/group%20dashboard.png)
+![task dashboard](https://github.com/aj941ga/TaskRoom-backend/blob/master/group.png)
 
 ## Tech stack & Open-source libraries
 
