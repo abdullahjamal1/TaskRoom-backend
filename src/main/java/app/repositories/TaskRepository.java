@@ -1,29 +1,32 @@
 package app.repositories;
 
 import java.util.Date;
-import java.util.List;
 
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
 
 import app.models.collections.Task;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 
 @Repository
-public interface TaskRepository extends MongoRepository<Task, String> {
+public interface TaskRepository extends ReactiveMongoRepository<Task, String> {
 
-	List<Task> findByGroupId(String groupId);
+	Flux<Task> findByGroupId(String groupId);
 
-	Task findOneBy_idAndGroupId(String id, String taskId);
+	Mono<Task> findOneBy_idAndGroupId(String id, String taskId);
 
-	Task findOneBy_id(String _id);
+	Mono<Task> findOneBy_id(String _id);
 
 	void deleteBy_id(String id);
 
-	Task findOneByGroupId(String id);
+	Mono<Task> findOneByGroupId(String id);
 
-	List<Task> findByDueTimeBetween(Date today, Date date);
+	Flux<Task> findByDueTimeBetween(Date today, Date date);
 
-	List<Task> findByIsCompletedFalseAndDueTimeBetween(Date today, Date date);
+	Flux<Task> findByIsCompletedFalseAndDueTimeBetween(Date today, Date date);
+
+	Mono<Task> save(Mono<Task> task_);
     
 }

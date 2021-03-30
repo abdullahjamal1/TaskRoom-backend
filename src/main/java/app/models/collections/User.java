@@ -12,6 +12,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import app.models.entity.RegisterationRequest;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Document
 @Data
@@ -41,6 +43,9 @@ public class User {
        List <String> array = new ArrayList <String>();
        array.add(" ");
     }
+
+	public void setGroups(List<String> groups2) {
+	}
 
 
 }

@@ -1,9 +1,6 @@
 package app.controllers;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,18 +20,18 @@ import app.services.CommentService;
 import app.services.TaskService;
 import app.services.UserService;
 import app.util.JwtUtil;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/comments")
-public class CommentController{
-	
-	
+public class CommentController {
+
 	@Autowired
 	private JwtUtil jwtUtil;
-	
+
 	@Autowired
 	private UserService userService;
-	
+
 	@Autowired
 	private TaskService taskService;
 
@@ -42,55 +39,61 @@ public class CommentController{
 	private CommentService commentService;
 
 	@Autowired
-	private CommentRepository commentRepo;	
-	
+	private CommentRepository commentRepo;
+
 	@GetMapping("")
-	public ResponseEntity<?> findAllComments(
-                @RequestParam("taskId") String taskId,	
-				@RequestParam("parentId") String parentId,
-				@RequestHeader("Authorization") String token) {
-		
-		if(taskService.isMember(taskId, token)){
-			return ResponseEntity.ok(commentRepo.findByTaskIdAndParentId(taskId, parentId));			
-		}
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+	public Mono<?> findAllComments(@RequestParam("taskId") String taskId, @RequestParam("parentId") String parentId,
+			@RequestHeader("Authorization") String token) {
+
+		return taskService.isMember(taskId, token).map(isMember -> {
+			if (isMember)
+				return ResponseEntity.ok(commentRepo.findByTaskIdAndParentId(taskId, parentId));
+			else
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+		});
+
 	}
 
-	
 	@PostMapping("")
-	public ResponseEntity<Object> postComment(
-        @RequestParam("taskId") String taskId,
-        @RequestBody CommentRequest commentRequest,
-        @RequestParam("parentId") String parentId,
-        @RequestHeader("Authorization") String token
-	) { 
+	public Mono<Object> postComment(@RequestParam("taskId") String taskId,
+			@RequestBody Mono<CommentRequest> commentRequest, @RequestParam("parentId") String parentId,
+			@RequestHeader("Authorization") String token) {
 
-		if(taskService.isMember(taskId, token)){
-		
-			Comment comment = new Comment(taskId, commentRequest.getComment(), parentId, jwtUtil.extractUsername(token));
-			return ResponseEntity.ok(commentRepo.save(comment));
-		}
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+		return taskService.isMember(taskId, token).map(isMember -> {
+
+			if (isMember) {
+
+				Comment comment = new Comment(taskId, commentRequest, parentId, jwtUtil.extractUsername(token));
+				return ResponseEntity.ok(commentRepo.save(comment));
+			}
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+
+		});
 	}
-	//==================================================================
-	
+	// ==================================================================
+
 	/**
 	 * @RootAdmin
 	 * @AuthorOfComment
 	 * @return
 	 */
-	
+
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Object> deleteComment(@PathVariable("id") String commentId
-									,@RequestHeader(name="Authorization") String token) {
-		
-		if(userService.isAdmin(token) || commentService.findAuthorBy_id(commentId).equals(jwtUtil.extractUsername(token))){
+	public Mono<Object> deleteComment(@PathVariable("id") String commentId,
+			@RequestHeader(name = "Authorization") String token) {
 
-            commentRepo.deleteBy_id(commentId);
-			return ResponseEntity.ok(null);
-		}
+		return userService.isAdmin(token).map(isAdmin -> {
 
-		else return ResponseEntity.status(403).body("un-authorized to delete the resource");
+			if (isAdmin || commentService.findAuthorBy_id(commentId).equals(jwtUtil.extractUsername(token))) {
+
+				commentRepo.deleteBy_id(commentId);
+				return ResponseEntity.ok(null);
+			}
+
+			else
+				return ResponseEntity.status(403).body("un-authorized to delete the resource");
+		});
+
 	}
-	
+
 }

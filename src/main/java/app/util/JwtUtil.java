@@ -10,7 +10,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import app.configs.ApplicationConfig;
-import app.repositories.UserRepository;
 import app.services.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -21,9 +20,6 @@ public class JwtUtil {
     
     @Autowired
     UserService userService;
-
-    @Autowired
-    UserRepository userRepository;
     
     @Autowired
     private ApplicationConfig config;
@@ -31,7 +27,6 @@ public class JwtUtil {
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
-
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
@@ -42,7 +37,7 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
     public Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(config.getSecret()).parseClaimsJws(token).getBody();
+        return Jwts.parser().setSigningKey(config.getSecret()).parseClaimsJws(token.toString()).getBody();
     }
 
     public Boolean isTokenExpired(String token) {
@@ -54,13 +49,20 @@ public class JwtUtil {
         return createToken(claims, userDetails.getUsername());
     }
     
-    public String createToken(Map<String, Object> claims, String subject) {
-
-        /* exp date is set to 100 hrs */
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 100))
-                .signWith(SignatureAlgorithm.HS256, config.getSecret()).compact();
+    public String createToken(Map<String, Object> claims, String email) {
+         /* exp date is set to 100 hrs */
+         return Jwts.builder().setClaims(claims).setSubject(email).setIssuedAt(new Date(System.currentTimeMillis()))
+         .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 100))
+         .signWith(SignatureAlgorithm.HS256, config.getSecret()).compact();
     }
+
+    // public String createToken(Map<String, Object> claims, Mono<String> email) {
+
+    //     /* exp date is set to 100 hrs */
+    //     return Jwts.builder().setClaims(claims).setSubject(email.block()).setIssuedAt(new Date(System.currentTimeMillis()))
+    //             .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 100))
+    //             .signWith(SignatureAlgorithm.HS256, config.getSecret()).compact();
+    // }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);

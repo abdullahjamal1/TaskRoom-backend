@@ -1,7 +1,6 @@
 package app.services;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -12,13 +11,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
-import app.models.collections.Group;
 import app.models.collections.Task;
 import app.models.entity.TaskRequest;
 import app.repositories.GroupRepository;
 import app.repositories.TaskRepository;
 import app.repositories.UserRepository;
 import app.util.JwtUtil;
+import reactor.core.publisher.Mono;
 
 @Service
 @EnableAsync
@@ -45,39 +44,37 @@ public class TaskService {
     private static Long DAY = 1000L * 60L * 60L * 24L;
 
 
-	public Task save(Task task) {
+	public Mono<Task> save(Task task) {
 		
-        task = taskRepository.save(task);
+        Mono<Task> monoTask = taskRepository.save(task);
         sendTaskNotification(task);
-        return task;
+        return monoTask;
     }
-    
-    @Async
+
     public void sendTaskNotification(Task task){
         
-        Group group =  groupRepository.findOneBy_id(task.getGroupId());
-        List <String> members = group.getMembers();
-    
-        for(String username : members){
-    
-            // sends first 20 letters of task description alongwith notification to each of the members
-            mailService.sendTaskNotification(
-                userRepository.findOneByUsername(username).getEmail(),
-                username, group.getTitle(), task.getAuthor(),
-                task.getDescription().substring(0, Math.min(task.getDescription().length(), 20)),
-                task.get_id(), task.getGroupId()
-                );
-        }
+        groupRepository.findOneBy_id(task.getGroupId()).doOnSuccess(group ->{
+            
+            group.getMembers().forEach(username ->{
+                // sends first 20 letters of task description alongwith notification to each of the members
+                mailService.sendTaskNotification(
+                    userRepository.findOneByUsername(username).map(user -> user.getEmail()),
+                    username, group.getTitle(),task
+                    );
+            });
+        });
+ 
     }
 
-    public boolean isMember(String taskId, String token){
+    public Mono<Boolean> isMember(String taskId, String token) {
 
-        String groupId = taskRepository.findOneBy_id(taskId).getGroupId();
-        Group group = groupRepository.findOneBy_id(groupId);
-        return group.getMembers().contains(jwtUtil.extractUsername(token));
+        Mono<String> groupId = taskRepository.findOneBy_id(taskId).map(task -> task.getGroupId() );
+       
+        return groupRepository.findOneBy_id(groupId).map(
+            group -> group.getMembers().contains(jwtUtil.extractUsername(token))
+            );
     }
 
-    @Async
 	public void deleteTask(String id) {
 
         // delete all comments under a task
@@ -88,15 +85,14 @@ public class TaskService {
 
 	}
 
-    @Async
 	public void deleteTasksByGroup(String id) {
 
-        List <Task> tasks = taskRepository.findByGroupId(id);
-        for(Task task : tasks){
-            deleteTask(task.get_id());
-        }
+        // for each task in a group
+        taskRepository.findByGroupId(id).map(task ->{
+                deleteTask(task.get_id());
+                return task;
+        });
 	}
-
 
     @Async
     @EventListener(ApplicationReadyEvent.class)
@@ -116,54 +112,57 @@ public class TaskService {
         timer.scheduleAtFixedRate(repeatedTask, delay, period);
     }
 
-
     @Async
     public void sendDueMail(){
 
         Date today = new Date();
-        List<Task> tasks = taskRepository.findByIsCompletedFalseAndDueTimeBetween(today, new Date(today.getTime() + DAY * 2));
-
-        for(Task task : tasks){
-            
-            Group group =  groupRepository.findOneBy_id(task.getGroupId());
-            List<String> members = group.getMembers();
+        taskRepository.findByIsCompletedFalseAndDueTimeBetween(today, new Date(today.getTime() + DAY * 2))
+        .map(task ->{
 
             // send mail to all members
             String subject = "Task : "+ task.getTitle()  +" Due On " + task.getDueTime();
             String body = "\n Task posted by " + task.getAuthor() + " is due on " + task.getDueTime()
                             + "\n Task : " + task.getShortDescription(20);
-
-            for(String member : members){
-
-                String email = userRepository.findOneByUsername(member).getEmail();
-
-                // send mail
-                mailService.sendMail(email, subject, ("Dear " + member + ",\n" + body));
-            }
             
-            // send mail to admin
-            String email = userRepository.findOneByUsername(group.getAdmin()).getEmail();
-           
-            // send mail
-            mailService.sendMail(email, subject, ("Dear " + group.getAdmin() + ",\n" + body));
-        }
+            groupRepository.findOneBy_id(task.getGroupId()).doOnSuccess(group ->{
+                
+                group.getMembers().forEach(member ->{
+                    
+                    Mono<String> email = userRepository.findOneByUsername(member).map(user -> user.getEmail() );
+                                // send mail
+                    mailService.sendMail(email.block(), subject, ("Dear " + member + ",\n" + body));
+
+                });
+                
+                // send mail to admin
+                Mono<String> email = userRepository.findOneByUsername(group.getAdmin()).map(user -> user.getEmail());
+                // send mail
+                mailService.sendMail(email.block(), subject, ("Dear " + group.getAdmin() + ",\n" + body));
+            });
+            return task;
+
+        });
+
     
     }
 
-	public String findAuthorBy_id(String id) {
-		return taskRepository.findOneBy_id(id).getAuthor();
+	public Mono<String> findAuthorBy_id(String id) {
+		return taskRepository.findOneBy_id(id).map(task -> task.getAuthor());
 	}
 
-	public Task updateTask(TaskRequest taskRequest, String taskId) {
+	public Mono<Task> updateTask(TaskRequest taskRequest, String taskId) {
 
-      Task task = taskRepository.findOneBy_id(taskId);
-      task.setDescription(taskRequest.getDescription());
-      task.setCompleted(taskRequest.isCompleted());
-      task.setDueTime(taskRequest.getDueTime());
-      task.setTitle(taskRequest.getTitle());
-      task.setUpdateTime(new Date());
-
-       return taskRepository.save(task);
+        Mono<Task> task_ =  taskRepository.findOneBy_id(taskId).map(
+            task -> {
+                task.setDescription(taskRequest.getDescription());
+                task.setCompleted(taskRequest.isCompleted());
+                task.setDueTime(taskRequest.getDueTime());
+                task.setTitle(taskRequest.getTitle());
+                task.setUpdateTime(new Date());
+                return task;
+            }
+    );
+        return taskRepository.save(task_);
 
 	}
     

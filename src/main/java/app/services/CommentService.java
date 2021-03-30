@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
 import app.repositories.CommentRepository;
+import reactor.core.publisher.Mono;
 
 @Service
 @EnableAsync
@@ -19,8 +20,8 @@ public class CommentService {
         commentRepo.deleteByTaskId(id);
 	}
 
-	public Object findAuthorBy_id(String commentId) {
-		return commentRepo.findOneBy_id(commentId).getAuthor();
+	public Mono<String> findAuthorBy_id(String commentId) {
+		return commentRepo.findOneBy_id(commentId).map(comment -> { return comment.getAuthor(); });
 	}
     
 }

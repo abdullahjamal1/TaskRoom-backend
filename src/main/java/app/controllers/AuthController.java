@@ -28,6 +28,7 @@ import app.repositories.UserRepository;
 import app.services.MailService;
 import app.services.UserService;
 import app.util.JwtUtil;
+import reactor.core.publisher.Mono;
 
 /*
  * 
@@ -83,9 +84,8 @@ public class AuthController {
 			throw new Exception("Incorrect username or password", e);
 		}
 
-
 		final UserDetails userDetails = userDetailsService
-				.loadUserByUsername(authenticationRequest.getUsername());
+				.loadUserByUsername(authenticationRequest.getUsername() );
 
 		final String jwt = jwtUtil.generateToken(userDetails);
 
@@ -116,37 +116,36 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("user already registered");
     }
 
-    @PostMapping("/reset-password")
-    // type email to receive input
-    public ResponseEntity<String> resetPasswordEmail(@RequestParam String email) {
+   @PostMapping("/reset-password")
+   // type email to receive input
+   public ResponseEntity<String> resetPasswordEmail(@RequestParam String email) {
 
-        final User user = userRepository.findOneByEmail(email);
+       Mono<User> user = userRepository.findOneByEmail(email);
 
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("not found");
+       if (user == null) {
+           return ResponseEntity.status(HttpStatus.NOT_FOUND).body("not found");
 
-        } else {
+       } else {
 
-            final String resetToken = userService.createActivationToken(user, true);
-            mailService.sendResetPassword(user.getEmail(), user.getName(), resetToken);
-        }
-        return ResponseEntity.ok("password-reset link sent successfully to " + email);
-    }
+           final String resetToken = userService.createActivationToken(user.block(), true);
+           mailService.sendResetPassword(user.map(u -> u.getEmail()), user.map(u -> u.getName()), resetToken);
+       }
+       return ResponseEntity.ok("password-reset link sent successfully to " + email);
+   }
     
     // post new password
     @PostMapping("/reset-password-change")
     public ResponseEntity<String> resetPassword(@RequestParam String password,
     @RequestParam String token) {
 
-        User user = userService.activate(token);
+        Mono<User> user = userService.activate(token);
 
         if(user == null){
 
-            
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("activation code not valid");
         }
 
-        user.setPassword(password);
+        user = user.map(u -> { u.setPassword(password); return u;});
         userService.resetPassword(user);
 
         HttpHeaders headers = new HttpHeaders();
@@ -159,7 +158,7 @@ public class AuthController {
     @GetMapping("/activate")
     public ResponseEntity<String> activate(@RequestParam String activation) {
 
-        final User u = userService.activate(activation);
+        final Mono<User> u = userService.activate(activation);
  
         if (u != null) {
             HttpHeaders headers = new HttpHeaders();
@@ -177,11 +176,11 @@ public class AuthController {
     @PostMapping("/resend-activation")
     public ResponseEntity<Object> activationSendPost(@RequestParam String email)
     {
-        final User u = userService.resetActivation(email);
+        final Mono<User> user = userService.resetActivation(email);
 
-        if (u != null){
+        if (user != null){
 
-        mailService.sendNewActivationRequest(u.getEmail(), u.getToken());
+        mailService.sendNewActivationRequest(user.map(u -> u.getEmail() ), user.map(u -> u.getToken() ) );
 
         return ResponseEntity.ok("activation mail sent !");
 

@@ -22,6 +22,8 @@ import app.controllers.AuthController;
 import app.models.collections.User;
 import app.repositories.UserRepository;
 import app.util.JwtUtil;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -32,10 +34,10 @@ public class UserService implements UserDetailsService {
     private ApplicationConfig config;
 
     @Autowired
-    private UserRepository userRepo;
+    private JwtUtil jwtUtil;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private UserRepository userRepo;
 
 
     public static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
@@ -52,7 +54,7 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
 
-        final User user = userRepo.findOneByUsernameOrEmail(username, username);
+        User user = userRepo.findOneByUsernameOrEmail(username, username);
 
         // if user not found
         if (user == null) {
@@ -117,8 +119,7 @@ public class UserService implements UserDetailsService {
     }
 
     /**
-     * Deletes user from the database with particular id
-     * remove user from any group
+     * Deletes user from the database with particular id remove user from any group
      * 
      * 
      * @param id Long : id of user to be deleted
@@ -143,21 +144,22 @@ public class UserService implements UserDetailsService {
      * @return
      */
 
-    public User activate(final String activation) {
+    public Mono<User> activate(final String activation) {
 
         if ("1".equals(activation) || activation.length() < INVALID_ACTIVATION_LENGTH) {
 
             return null;
         }
-        final User user = userRepo.findOneByToken(activation);
+        return userRepo.findOneByToken(activation).map(user -> {
+            if (user != null) {
 
-        if (user != null) {
+                user.setToken("1");
+                userRepo.save(user);
+                return user;
+            }
+            return null;
+        });
 
-            user.setToken("1");
-            userRepo.save(user);
-            return user;
-        }
-        return null;
     }
 
     /**
@@ -195,62 +197,64 @@ public class UserService implements UserDetailsService {
      * @see createActivationToken()
      */
 
-    public User resetActivation(final String email) {
+    public Mono<User> resetActivation(final String email) {
 
-        final User user = userRepo.findOneByEmail(email);
+        return userRepo.findOneByEmail(email).map(user -> {
 
-        if (user != null) {
+            if (user != null) {
 
-            createActivationToken(user, true);
-            return user;
-        }
-        return null;
+                createActivationToken(user, true);
+                return user;
+            }
+            return null;
+        });
     }
 
     /**
      * resets password for a particular user in database
+     * FIX : encode user password is blocking
      * 
      * @param user
      * @return TRUE if user found else FALSE
      */
 
-    public Boolean resetPassword(User user) {
+    public Mono<Boolean> resetPassword(Mono<User> user) {
 
-        final User u = userRepo.findByUsername(user.getUsername());
+        return userRepo.findByUsername(user.map(userDetail -> userDetail.getUsername() )).map(u -> {
 
-        if (u != null) {
+            if (u != null) {
 
-            u.setPassword(encodeUserPassword(user.getPassword()));
-            u.setToken("1");
-            userRepo.save(u);
-            return true;
-        }
-        return false;
+                u.setPassword(encodeUserPassword(user.block().getPassword()));
+                u.setToken("1");
+                userRepo.save(u);
+                return true;
+            }
+            return false;
+
+        });
     }
 
-
-    public User saveUser(User user) {
+    public Mono<User> saveUser(User user) {
         return userRepo.save(user);
     }
 
-    public boolean isAdmin(String token) {
+    public Mono<Boolean> isAdmin(String token) {
 
-        if (userRepo.findByUsername(jwtUtil.extractUsername(token)).isAdmin())
-            return true;
-        else
-            return false;
+        return userRepo.findByUsername(jwtUtil.extractUsername(token)).map(user ->{
+             if(user.isAdmin()) return true;
+             else return false;
+            });
     }
 
-    public List<String> findAll(){
+    public Flux<List<String>> findAll() {
 
-        List<User> users = userRepo.findAll();
         List<String> usernames = new ArrayList<String>();
+        return userRepo.findAll().map(user ->{
 
-        for(User user : users){
             usernames.add(user.getUsername());
-        }
-        return usernames;
-  
+            return usernames;
+        });
+
     }
 
 }

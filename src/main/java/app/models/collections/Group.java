@@ -1,6 +1,5 @@
 package app.models.collections;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Document
 @Data
@@ -29,7 +30,7 @@ public class Group {
     private String theme;
     private Date creationTime;
     private List <String> members;  // list of usernames
-    private List<String> admins;
+    private List <String> admins;
     
     public Group(GroupRequest groupRequest, String admin) {
         this.title = groupRequest.getTitle();
@@ -43,5 +44,6 @@ public class Group {
         this.admins = array;
         this.creationTime = new Date();
 	}
+
 
 }

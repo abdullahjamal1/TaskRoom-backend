@@ -24,7 +24,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.reactive.config.EnableWebFlux;
 
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
@@ -38,7 +40,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication
 @Controller
 @EnableSwagger2
-@EnableMongoRepositories
+@EnableReactiveMongoRepositories
 public class Application {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(Application.class);

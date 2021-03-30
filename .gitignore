@@ -8,5 +8,4 @@ config/
 users/
 *.db
 .checkstyle
-# *.properties
 src/main/resources/fileSystem/*

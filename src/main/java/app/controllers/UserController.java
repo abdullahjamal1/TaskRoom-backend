@@ -16,10 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import app.models.collections.User;
-import app.models.entity.UsernamesResponse;
 import app.repositories.UserRepository;
 import app.services.UserService;
 import app.util.JwtUtil;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/users")
@@ -33,24 +34,23 @@ public class UserController {
 
     @Autowired
     private JwtUtil jwtUtil;
-    
+
     public static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
-
     @GetMapping("")
-    public List<String> getAllUsers() {
+    public Flux<List<String>> getAllUsers() {
 
         return userService.findAll();
     }
 
     @GetMapping("/{username}")
-    public User getUserById(@PathVariable("username") final String username) {
+    public Mono<User> getUserById(@PathVariable("username") final String username) {
 
         return userRepository.findByUsername(username);
     }
 
     @PutMapping("/{username}")
-    public ResponseEntity<User> updateUserById(@PathVariable("username") final String username,
+    public ResponseEntity<Mono<User>> updateUserById(@PathVariable("username") final String username,
                     @RequestBody final User user,
                     @RequestHeader(name="Authorization") String token
                     ) {
@@ -66,14 +66,17 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}")
-    public ResponseEntity<Object> delete(@PathVariable("username") String username,
+    public Mono<Object> delete(@PathVariable("username") String username,
     @RequestHeader(name="Authorization") String token) {
 
-        if(jwtUtil.extractUsername(token) == username || userService.isAdmin(token)){
-            userService.delete(username);
-            return ResponseEntity.ok(null);
-        }
-        else return ResponseEntity.status(403).body(null);
+        return userService.isAdmin(token).map(isAdmin ->{
+
+            if(jwtUtil.extractUsername(token) == username || isAdmin){
+                userService.delete(username);
+                return ResponseEntity.ok(null);
+            }
+            else return ResponseEntity.status(403).body(null);
+        });
     }
 
 
